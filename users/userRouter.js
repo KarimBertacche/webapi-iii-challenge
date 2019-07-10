@@ -3,11 +3,28 @@ const data = require('./userDb');
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
+router.use(express.json());
 
+router.post('/', async (req, res) => {
+    try {
+        const { body } = req;
+        
+        if(body.name !== '') {
+            const addedUser = await data.insert(req.body);
+            res.status(201).json(addedUser);
+        } else {
+            res.status(400).json({
+                message: 'Name of user is missing'
+            });
+        }
+    } catch(error) {
+        res.status(500).json({
+            message: 'Server error while creating user'
+        });
+    }
 });
 
-router.post('/:id/posts', (req, res) => {
+router.post('/:id/posts', async (req, res) => {
 
 });
 
@@ -79,12 +96,10 @@ router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const changes = req.body;
+        const updatedUser = await data.update(id, changes);
 
         if(changes.name !== '') {
-            const updatedUser = await data.update(id, changes);
-            if(updatedUser) {
-                res.status(200).json(updatedUser);
-            }
+            res.status(200).json(updatedUser);
         } else {
             res.status(400).json({
                 message: 'User name is missing'

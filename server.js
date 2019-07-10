@@ -1,11 +1,11 @@
 const express = require('express');
-// const postRoute = require('./posts/postRouter');
+const postRoute = require('./posts/postRouter');
 const userRoute = require('./users/userRouter');
 
 const server = express();
 
 server.use('/user', userRoute);
-// server.use(postRoute);
+server.use('/posts', postRoute);
 
 server.use(logger);
 
