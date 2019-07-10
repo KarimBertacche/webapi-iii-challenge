@@ -1,10 +1,5 @@
 // code away!
-const express = require('express');
-const postRoute = require('./posts/postRouter');
-
-const server = express();
-
-server.use(postRoute);
+const server = require('./server');
 
 server.listen(4000, () => {
     console.log('** Server running on port 4K **');
