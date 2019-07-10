@@ -25,7 +25,7 @@ router.post('/', validateUser, async (req, res) => {
     }
 });
 
-router.post('/:id/posts', validateUser, validatePost, async (req, res) => {
+router.post('/:id/posts', [validateUser, validatePost], async (req, res) => {
     try {
         const newPost = { ...req.body, user_id: req.params.id};
         const addedPost = await postData.insert(newPost);

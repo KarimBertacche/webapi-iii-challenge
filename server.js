@@ -4,10 +4,10 @@ const userRoute = require('./users/userRouter');
 
 const server = express();
 
+server.use(logger);
+
 server.use('/user', userRoute);
 server.use('/posts', postRoute);
-
-server.use(logger);
 
 server.get('/', (req, res) => {
   res.send(`<h2>Let's write some middleware!</h2>`)
@@ -16,10 +16,11 @@ server.get('/', (req, res) => {
 //custom middleware
 
 function logger(req, res, next) {
-  console.log(req, 'request');
-  console.log(req.params, 'request url');
-  console.log(new Date(), 'timestamp');
+  console.log(req.method, 'method');
+  console.log(req.url, 'Url');
+  console.log(new Date(), 'Timestamp');
   next();
 };
+
 
 module.exports = server;
