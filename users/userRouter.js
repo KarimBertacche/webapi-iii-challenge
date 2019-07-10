@@ -1,11 +1,12 @@
 const express = require('express');
 const data = require('./userDb');
+const postData = require('../posts/postDb');
 
 const router = express.Router();
 
 router.use(express.json());
 
-router.post('/', async (req, res) => {
+router.post('/', validateUser, async (req, res) => {
     try {
         const { body } = req;
         
@@ -24,8 +25,18 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.post('/:id/posts', async (req, res) => {
+router.post('/:id/posts', validateUser, validatePost, async (req, res) => {
+    try {
+        const newPost = { ...req.body, user_id: req.params.id};
+        const addedPost = await postData.insert(newPost);
+        
+        res.status(201).json(addedPost);
 
+    } catch(error) {
+        res.status(500).json({
+            message: 'Server error while creating user post'
+        });
+    }
 });
 
 router.get('/', async (req, res) => {
@@ -39,26 +50,11 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user = await data.getById(id);
-
-        if(user) {
-            res.status(200).json(user);
-        } else {
-            res.status(404).json({
-                message: 'User not found'
-            });
-        }
-    } catch(error) {
-        res.status(500).json({
-            message: 'Server error while retrieving user'
-        });
-    }
+router.get('/:id', validateUserId, async (req, res) => {
+    res.status(200).json(req.user);
 });
 
-router.get('/:id/posts', async (req, res) => {
+router.get('/:id/posts', validateUserId, async (req, res) => {
     try {
         const { id } = req.params;
         const userPosts = await data.getUserPosts(id);
@@ -77,7 +73,7 @@ router.get('/:id/posts', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateUserId, async (req, res) => {
     try {
         const { id } = req.params;
         const deleted = await data.remove(id);
@@ -92,7 +88,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', [validateUserId, validateUser], async (req, res) => {
     try {
         const { id } = req.params;
         const changes = req.body;
@@ -114,16 +110,50 @@ router.put('/:id', async (req, res) => {
 
 //custom middleware
 
-function validateUserId(req, res, next) {
+async function validateUserId(req, res, next) {
+    try {
+        const { id } = req.params;
+        const userId = await data.getById(id);
 
+        if(!isNaN(parseInt(id))) {
+            if(userId) {
+                req.user = userId;
+                next();
+            } else {
+                res.status(400).json({
+                    message: 'User id not found'
+                });
+            }
+        } else {
+            res.status(400).json({
+                message: 'The User Id used is not a valid number'
+            });
+        }
+    } catch(error) {
+        res.status(500).json({
+            message: 'Server error while retrieving the user id'
+        });
+    }
 };
 
 function validateUser(req, res, next) {
-
+    if(req.body && Object.keys(req.body).length) {
+        next();
+    } else {
+        res.status(400).json({
+            message: 'Please include request body'
+        });
+    }
 };
 
 function validatePost(req, res, next) {
-
+    if(req.body && Object.keys(req.body).length) {
+        next();
+    } else {
+        res.status(400).json({
+            message: 'Please include request body'
+        });
+    }
 };
 
 module.exports = router;

@@ -18,27 +18,11 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const post = await data.getById(id);
-        
-        if(post) {
-            res.status(200).json(post);
-        } else {
-            res.status(404).json({
-                message: 'Post not found'
-            });
-        }
-        
-    } catch(error) {
-        res.status(500).json({
-            message: 'Server error while retrieving post'
-        });
-    }
+router.get('/:id', validatePostId, async (req, res) => {
+    res.status(200).json(req.post);
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validatePostId, async (req, res) => {
     try {
         const { id } = req.params;
         const deleted = await data.remove(id);
@@ -57,7 +41,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', validatePostId, async (req, res) => {
     try {
         const { id } = req.params;
         const changes = req.body;
@@ -79,8 +63,29 @@ router.put('/:id', async (req, res) => {
 
 // custom middleware
 
-function validatePostId(req, res, next) {
-
+async function validatePostId(req, res, next) {
+    try {
+        const { id } = req.params;
+        const postId = await data.getById(id);
+        if(!isNaN(parseInt(id))) {
+            if(postId) {
+                req.post = postId;
+                next();
+            } else {
+                res.status(404).json({
+                    message: 'The post Id used does not exist'
+                });
+            }
+        } else {
+            res.status(404).json({
+                message: 'The post Id used is not a valid number'
+            });
+        }
+    } catch(error) {
+        res.status(500).json({
+            message: 'Server error while retrieving post Id'
+        });
+    }
 };
 
 module.exports = router;
